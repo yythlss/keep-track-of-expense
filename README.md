@@ -22,20 +22,26 @@
 
 1. **Fork 本仓库**到你自己的命名空间，建议改成你项目的名字（如 `my-games`）。
 2. 进入仓库，点右上角橙色 **「云原生开发」**，选 **WebIDE**，开始 Vibe Coding。
-3. 在终端启动静态服务，用 PORTS 面板预览：
+3. 在终端启动静态服务，用 PORTS 面板预览（开发时用 **8080**，不要用 8686）：
 
    ```bash
-   python -m http.server 8686 --bind 0.0.0.0
+   python -m http.server 8080 --bind 0.0.0.0
    ```
 
-   > ⚠️ 必须 `--bind 0.0.0.0`（模板 Dockerfile 已处理好），否则端口预览访问不到。
+   然后在底部 **PORTS** 面板打开 `8080` 的预览链接即可。
 
-也可以用 Docker 跑：
+   > ⚠️ **云原生开发模式下 8686 已被 WebIDE（code-server）占用**，直接绑 8686 会报 `Address already in use`。开发调试请另用一个空闲端口（如 8080）。
+   >
+   > 8686 是**仅预览模式**专用的业务端口（CNB 强制要求），也是 `Dockerfile` 与检查流水线约定的端口——这些都在**容器里**跑，和开发终端的 code-server 不冲突，无需改动。
+   >
+   > ⚠️ 必须 `--bind 0.0.0.0`，否则端口预览访问不到。
+
+也可以用 Docker 跑（容器内部仍用 8686，对外映射到宿主任意空闲端口，如 8080）：
 
 ```bash
 docker build -t my-games .
-docker run -d -p 8686:8686 my-games
-# 浏览器打开 http://127.0.0.1:8686
+docker run -d -p 8080:8686 my-games
+# 在 PORTS 面板打开 8080
 ```
 
 ---
