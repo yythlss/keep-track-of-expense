@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🎮 小游戏合集 · Hackathon 作品模板</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "PingFang SC", "Microsoft YaHei", -apple-system, sans-serif;
+      background: radial-gradient(circle at 50% 0%, #1e1b4b, #0f172a 70%);
+      color: #e2e8f0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 20px;
+    }
+    h1 { font-size: 34px; letter-spacing: 2px; margin-bottom: 8px;
+         background: linear-gradient(90deg, #f472b6, #818cf8, #34d399);
+         -webkit-background-clip: text; background-clip: text; color: transparent; }
+    p.sub { color: #94a3b8; margin-bottom: 40px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 24px; width: min(900px, 100%); }
+    .card {
+      background: #1e293b; border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px; padding: 28px 24px; text-decoration: none;
+      color: inherit; transition: transform .2s, box-shadow .2s, border-color .2s;
+      display: flex; flex-direction: column; gap: 10px;
+    }
+    .card:hover { transform: translateY(-6px); border-color: var(--c);
+                  box-shadow: 0 16px 40px rgba(0,0,0,.5); }
+    .card .emoji { font-size: 52px; }
+    .card h2 { font-size: 22px; }
+    .card span { color: #94a3b8; font-size: 14px; line-height: 1.5; }
+    .card .tag { align-self: flex-start; margin-top: 6px; font-size: 12px;
+                 padding: 3px 10px; border-radius: 999px; background: var(--c); color: #0f172a; font-weight: 600; }
+    footer { margin-top: 48px; color: #64748b; font-size: 13px; text-align: center; }
+    footer code { color: #a5b4fc; }
+  </style>
+</head>
+<body>
+  <h1>🎮 小游戏合集</h1>
+  <p class="sub">三款经典街机小游戏 点开即玩 · Hackathon 作品模板</p>
+
+  <div class="grid">
+    <a class="card" href="games/mario.html" style="--c:#f87171">
+      <div class="emoji">🍄</div>
+      <h2>超级玛丽</h2>
+      <span>横版跳跃闯关 踩扁小怪 收集金币 抵达旗帜过关 共 2 关</span>
+      <span class="tag">方向键移动 · 空格跳跃</span>
+    </a>
+
+    <a class="card" href="games/tank.html" style="--c:#fbbf24">
+      <div class="emoji">🚜</div>
+      <h2>坦克大战</h2>
+      <span>俯视角射击 消灭全部敌方坦克即获胜 小心别被击中</span>
+      <span class="tag">WASD 移动 · 空格开火</span>
+    </a>
+
+    <a class="card" href="games/snake.html" style="--c:#34d399">
+      <div class="emoji">🐍</div>
+      <h2>贪吃蛇</h2>
+      <span>经典贪吃蛇 吃食物变长得分 撞墙或咬到自己就结束</span>
+      <span class="tag">方向键控制</span>
+    </a>
+  </div>
+
+  <footer>
+    基于 CNB 云原生构建 · 纯前端 Canvas 实现<br />
+    想换成自己的作品 直接改 <code>index.html</code> 与 <code>games/</code> 即可
+  </footer>
+</body>
+</html>

@@ -1,0 +1,40 @@
+# ============================================================
+# Hackathon 作品模板流水线
+#
+#   include         从中心 CI 仓库引入作品自动化检查流水线 ($.pull_request)
+#                   检查逻辑集中在中心仓库维护 统一升级 学员无需也不应改写检查本身
+#   $.vscode        云原生开发环境  Fork 后点右上角 云原生开发 秒级拉起
+#   main.push       推送到 main 时自动构建并推送镜像到 CNB 制品库 供仅预览模式使用
+#
+# 注 你可以自由编辑本文件 (开预览 / 改端口 / 定制构建) 只要保留上面的 include 即可
+#    若要开启 Fork 即玩 的仅预览按钮 见 README 进阶 需把 $.vscode 段替换为
+#    onlyPreview 配置 建议新建 dev 分支保留开发用配置 主分支专用于对外展示
+# ============================================================
+
+# ---- 作品自动化检查流水线 从 CI 仓库引入 ----
+include:
+  - https://cnb.cool/whut1/ai-engineering-exercise-ci/-/blob/main/hackathon.yml
+
+$:
+  # ---------------- 云原生开发环境 ----------------
+  vscode:
+    - runner:
+        cpus: 16
+      docker:
+        image: docker.cnb.cool/hackathon/vibegame-dev-env:latest
+      services:
+        - vscode
+        - docker
+
+main:
+  # ---------------- 推送主分支 自动构建并推送镜像 ----------------
+  push:
+    - name: 构建并推送镜像
+      services:
+        - docker
+      stages:
+        - name: build-and-push
+          script: |
+            docker build -t ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:latest .
+            docker push ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:latest
+            echo "✅ 镜像已推送 可配合仅预览模式一键启动"

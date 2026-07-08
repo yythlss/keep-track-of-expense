@@ -1,0 +1,5 @@
+workspace:
+  launch:
+    button:
+      name: 🎮 开始游戏
+      description: 点开即玩三款经典街机小游戏 超级玛丽 / 坦克大战 / 贪吃蛇
