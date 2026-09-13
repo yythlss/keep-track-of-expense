@@ -39,10 +39,15 @@ $:
         VIRTUAL_ENV_DISABLE_PROMPT: "1"
       services:
         - docker
+        # ⚠️ 用「对象形式」声明 vscode 服务时，CNB 官方 schema 强制要求本流水线
+        #    必须同时存在 stages 段（见文末说明），否则整份 .cnb.yml 校验不通过，
+        #    所有流水线（包括 main.push）都不会触发。
         - name: vscode
           options:
             # 跳过 IDE，点按钮直接出业务端口预览页
             onlyPreview: true
+            # ⚠️ launch / daemon / keepAliveTimeout 必须写在 options 内，
+            #    与 options 平级 CNB 不会识别（官方 schema 明确如此）。
             # 用 >- 折行成单行命令；-e 透传平台注入的三个大模型环境变量，
             # 容器里就能零密钥调用 CNB LLM
             launch: >-
@@ -51,4 +56,10 @@ $:
               -e CNB_API_ENDPOINT -e CNB_REPO_SLUG -e CNB_TOKEN
               docker.cnb.cool/yythlss/keep-track-of-expenses:latest
             keepAliveTimeout: 3600000
+            # 排查阶段建议改回 false，这样能在构建日志里看到 launch 的输出
             daemon: true
+      # 对象形式 vscode 服务时必须提供的 stages（内容可为空脚本）
+      stages:
+        - name: prepare
+          script: |
+            echo "仅预览模式：准备以 docker run 拉起业务容器（监听 8686）"
