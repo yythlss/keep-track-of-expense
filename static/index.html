@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>小账本 · 一句话记账</title>
+  <meta name="theme-color" content="#fff6e5" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐷</text></svg>" />
+  <link rel="stylesheet" href="/static/style.css?v=4" />
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <button type="button" class="brand" data-nav="home" title="回到首页">
+        <span class="logo" id="brand-logo">🐷</span>
+        <span class="brand-text">
+          <span class="brand-name">小账本</span>
+          <span id="brand-sub">记录每一笔，生活更有序</span>
+        </span>
+      </button>
+      <div class="topbar-tools">
+        <span id="llm-badge" class="badge badge-muted">检测中…</span>
+        <button type="button" id="open-settings" class="avatar-btn" title="个性化设置" aria-label="个性化设置">
+          <span id="avatar-view">🐷</span>
+        </button>
+      </div>
+    </header>
+
+    <main class="layout">
+      <!-- ==================== 首页：一句话记账 + 看板 + 流水 ==================== -->
+      <section id="view-home" class="view">
+        <section class="card quick-hero">
+          <div class="hero-main">
+            <h2 class="hero-title"><span class="hero-bolt">⚡</span>一句话记账</h2>
+            <p class="hero-sub">说一句话就把账记好，分类和日期它自己填</p>
+            <form id="quick-form" class="quick-form">
+              <input id="quick-input" type="text" placeholder="例如：昨天打车 32 块" autocomplete="off" />
+              <button type="submit" class="btn btn-primary">解析</button>
+            </form>
+            <div class="examples">
+              <span>试试：</span>
+              <button type="button" class="chip" data-example="午饭外卖 25 元">午饭外卖 25 元</button>
+              <button type="button" class="chip" data-example="昨天打车 32 块">昨天打车 32 块</button>
+              <button type="button" class="chip" data-example="今天发工资 12000">今天发工资 12000</button>
+            </div>
+            <div id="parse-result" class="parse-result hidden"></div>
+          </div>
+
+          <aside class="hero-side">
+            <div class="hero-stat">
+              <span class="overview-label">本月总消费 👀</span>
+              <div class="overview-amount">
+                <span class="overview-cny">¥</span><span id="ov-expense">0.00</span>
+              </div>
+              <span class="overview-sub" id="ov-compare">—</span>
+            </div>
+            <span class="hero-tip" id="ov-tip">加油省钱！</span>
+          </aside>
+        </section>
+
+        <div class="home-grid">
+          <!-- 月度看板：直接摊在主页，柱状条可点开当天明细 -->
+          <section class="card board-card">
+            <div class="card-head">
+              <h3 class="card-title">📊 月度看板</h3>
+              <input type="month" id="board-month" />
+            </div>
+
+            <div class="stat-row">
+              <div class="stat">
+                <span class="stat-label">收入</span>
+                <span id="stat-income" class="stat-value income">0.00</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">支出</span>
+                <span id="stat-expense" class="stat-value expense">0.00</span>
+              </div>
+              <div class="stat">
+                <span class="stat-label">结余</span>
+                <span id="stat-balance" class="stat-value">0.00</span>
+              </div>
+            </div>
+
+            <div class="board-metrics" id="board-metrics"></div>
+
+            <div class="chart-block">
+              <h3 class="chart-title">支出分类占比 <span class="chart-hint">点分类看该类流水</span></h3>
+              <div class="donut-wrap">
+                <svg id="donut" viewBox="0 0 120 120" class="donut"></svg>
+                <ul id="legend" class="legend"></ul>
+              </div>
+            </div>
+
+            <div class="chart-block">
+              <h3 class="chart-title">近 7 日支出 <span class="chart-hint">点柱子看当天收支</span></h3>
+              <div id="trend" class="trend"></div>
+              <div id="trend-detail" class="trend-detail hidden"></div>
+            </div>
+          </section>
+
+          <!-- 账单流水：主页右栏，列表内部滚动，不把页面撑长 -->
+          <section class="card records-card" id="records-card">
+            <div class="card-head">
+              <h3 class="card-title">📒 账单流水</h3>
+              <button type="button" id="toggle-manual" class="btn btn-ghost">+ 手动记一笔</button>
+            </div>
+
+            <form id="manual-form" class="manual-form hidden">
+              <div class="field">
+                <label for="m-type">类型</label>
+                <select id="m-type">
+                  <option value="expense">支出</option>
+                  <option value="income">收入</option>
+                </select>
+              </div>
+              <div class="field">
+                <label for="m-amount">金额</label>
+                <input id="m-amount" type="number" step="0.01" min="0" placeholder="0.00" />
+              </div>
+              <div class="field">
+                <label for="m-category">分类</label>
+                <select id="m-category"></select>
+              </div>
+              <div class="field">
+                <label for="m-date">日期</label>
+                <input id="m-date" type="date" />
+              </div>
+              <div class="field field-wide">
+                <label for="m-note">备注</label>
+                <input id="m-note" type="text" placeholder="选填，例如：和同事聚餐" />
+              </div>
+              <button type="submit" class="btn btn-primary field-wide">保存</button>
+            </form>
+
+            <div class="filters">
+              <input type="month" id="filter-month" />
+              <select id="filter-category">
+                <option value="">全部分类</option>
+              </select>
+              <select id="filter-type">
+                <option value="">全部类型</option>
+                <option value="expense">仅支出</option>
+                <option value="income">仅收入</option>
+              </select>
+              <button type="button" id="filter-clear" class="btn btn-ghost hidden">清除筛选</button>
+            </div>
+            <p id="filter-scope" class="filter-scope hidden"></p>
+            <ul id="record-list" class="record-list"></ul>
+          </section>
+        </div>
+
+        <!-- 其余功能：点进去看细节 -->
+        <nav class="entry-grid" aria-label="功能入口">
+          <button type="button" class="entry-card" data-nav="calendar" style="--entry-color:#dceeff">
+            <span class="entry-icon">📅</span>
+            <span class="entry-text">
+              <span class="entry-name">日历记账</span>
+              <span class="entry-desc">按月铺开，看每天花了多少</span>
+            </span>
+            <span class="entry-arrow" aria-hidden="true">›</span>
+          </button>
+
+          <button type="button" class="entry-card" data-nav="vault" style="--entry-color:#ffe0ec">
+            <span class="entry-icon">🏦</span>
+            <span class="entry-text">
+              <span class="entry-name">金库 · 攒钱罐</span>
+              <span class="entry-desc">定个小目标，看它一点点满</span>
+            </span>
+            <span class="entry-arrow" aria-hidden="true">›</span>
+          </button>
+        </nav>
+      </section>
+
+      <!-- ==================== 日历记账 ==================== -->
+      <section id="view-calendar" class="view hidden">
+        <div class="view-head">
+          <button type="button" class="btn btn-ghost" data-nav="home">‹ 返回</button>
+          <h2 class="view-title">📅 日历记账</h2>
+          <span class="view-hint">点某一天，看当天流水</span>
+        </div>
+
+        <section class="card calendar-section">
+          <div class="cal-head">
+            <div class="cal-month">
+              <button type="button" class="btn-icon" id="cal-prev" title="上个月" aria-label="上个月">‹</button>
+              <button type="button" class="cal-month-label" id="cal-month-label">—</button>
+              <button type="button" class="btn-icon" id="cal-next" title="下个月" aria-label="下个月">›</button>
+            </div>
+            <button type="button" id="cal-today" class="btn btn-ghost">今天</button>
+            <div class="cal-tabs" id="cal-tabs">
+              <button type="button" class="cal-tab is-active" data-mode="expense">支出</button>
+              <button type="button" class="cal-tab" data-mode="income">收入</button>
+              <button type="button" class="cal-tab" data-mode="both">收支</button>
+              <button type="button" class="cal-tab" data-mode="balance">结余</button>
+            </div>
+          </div>
+
+          <div class="cal-summary" id="cal-summary"></div>
+
+          <div class="cal-weekdays">
+            <span>一</span><span>二</span><span>三</span><span>四</span>
+            <span>五</span><span>六</span><span>日</span>
+          </div>
+          <div class="cal-grid" id="cal-grid"></div>
+
+          <div class="cal-detail hidden" id="cal-detail"></div>
+        </section>
+      </section>
+
+      <!-- ==================== 金库 · 攒钱罐 ==================== -->
+      <section id="view-vault" class="view hidden">
+        <div class="view-head">
+          <button type="button" class="btn btn-ghost" data-nav="home">‹ 返回</button>
+          <h2 class="view-title">🏦 金库 · 攒钱罐</h2>
+          <span class="view-hint">存钱会有金币动效</span>
+        </div>
+
+        <section class="card vault-section">
+          <div class="card-head">
+            <h3 class="card-title">我的金库</h3>
+            <div class="vault-tools">
+              <span id="vault-total" class="vault-total">已存 0.00</span>
+              <button type="button" id="sound-toggle" class="btn-icon" title="音效开关">🔊</button>
+              <button type="button" id="toggle-vault-form" class="btn btn-ghost">+ 新建金库</button>
+            </div>
+          </div>
+
+          <form id="vault-form" class="vault-create hidden">
+            <div class="field">
+              <label for="v-name">金库名</label>
+              <input id="v-name" type="text" maxlength="20" placeholder="例如：旅行基金" />
+            </div>
+            <div class="field">
+              <label for="v-goal">目标金额</label>
+              <input id="v-goal" type="number" step="0.01" min="0" placeholder="选填，不填即不设目标" />
+            </div>
+            <div class="field">
+              <label for="v-icon">图标</label>
+              <select id="v-icon"></select>
+            </div>
+            <div class="field field-wide">
+              <label for="v-note">备注</label>
+              <input id="v-note" type="text" maxlength="50" placeholder="选填，例如：毕业旅行" />
+            </div>
+            <button type="submit" class="btn btn-primary field-wide">创建金库</button>
+          </form>
+
+          <ul id="vault-list" class="vault-list"></ul>
+        </section>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>小账本 · 课程黑客松作品 · 数据仅存本地 SQLite</span>
+      <span id="toast" class="toast"></span>
+    </footer>
+  </div>
+
+  <!-- ==================== AI 桌宠：常驻在界面旁边，直接就能互动 ==================== -->
+  <aside class="pet-dock" id="pet-dock" aria-label="AI 桌宠「账小猪」">
+    <div class="pet-panel">
+      <p class="pet-bubble" id="pet-bubble">我是账小猪，正在数你今天的硬币…</p>
+
+      <div class="pet-controls">
+        <p class="pet-meta">
+          <span id="pet-mood-label">心情：开心</span>
+          <span class="pet-dot">·</span>
+          <span id="pet-source">规则模式</span>
+        </p>
+
+        <form id="pet-form" class="pet-form">
+          <input id="pet-input" type="text" maxlength="200" placeholder="跟它说点什么…" autocomplete="off" />
+          <button type="submit" class="btn btn-primary">发送</button>
+        </form>
+
+        <div class="pet-actions">
+          <button type="button" class="chip" data-pet-action="pet">摸摸头</button>
+          <button type="button" class="chip" data-pet-action="feed">喂个苹果</button>
+          <button type="button" class="chip" data-pet-action="dance">跳一段</button>
+          <button type="button" class="chip" data-pet-action="report">播报本月</button>
+        </div>
+
+        <div class="pet-ask">
+          <span>可以问：</span>
+          <button type="button" class="chip" data-pet-ask="这个月我花了多少？">这个月我花了多少？</button>
+          <button type="button" class="chip" data-pet-ask="我该怎么省钱？">我该怎么省钱？</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="pet-stage">
+      <span class="pet-mood" id="pet-mood">❤️</span>
+      <button type="button" id="pet-body" class="pet-body" title="摸摸它">🐷</button>
+      <span class="pet-shadow" aria-hidden="true"></span>
+    </div>
+  </aside>
+
+  <!-- ==================== 个性化设置抽屉 ==================== -->
+  <div id="settings-mask" class="sheet-mask hidden"></div>
+  <aside id="settings-sheet" class="sheet hidden" aria-label="个性化设置">
+    <div class="sheet-head">
+      <h2>🎨 个性化</h2>
+      <button type="button" class="btn-icon" id="close-settings" title="关闭">✕</button>
+    </div>
+
+    <div class="sheet-body">
+      <div class="setting-block">
+        <h3 class="setting-title">昵称</h3>
+        <input id="set-nickname" class="setting-input" type="text" maxlength="12" placeholder="怎么称呼你？" />
+      </div>
+
+      <div class="setting-block">
+        <h3 class="setting-title">头像 <span class="setting-hint">选一个或上传图片</span></h3>
+        <div id="avatar-picker" class="avatar-picker"></div>
+        <label class="upload-btn">
+          <input type="file" id="avatar-upload" accept="image/*" hidden />
+          📷 上传图片
+        </label>
+      </div>
+
+      <div class="setting-block">
+        <h3 class="setting-title">背景 <span class="setting-hint">主题或自定义图片</span></h3>
+        <div id="bg-picker" class="bg-picker"></div>
+        <div class="setting-actions">
+          <label class="upload-btn">
+            <input type="file" id="bg-upload" accept="image/*" hidden />
+            🖼️ 上传背景图
+          </label>
+          <button type="button" id="bg-reset" class="btn btn-ghost">恢复主题背景</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sheet-foot">
+      <button type="button" id="save-settings" class="btn btn-primary">保存</button>
+    </div>
+  </aside>
+
+  <!-- coin.js 必须在 app.js 之前：app.js 启动时会检查 window.CoinFX 是否存在 -->
+  <script src="/static/coin.js?v=4"></script>
+  <script src="/static/app.js?v=4"></script>
+  <script src="/static/calendar.js?v=4"></script>
+  <script src="/static/pet.js?v=4"></script>
+  <script src="/static/profile.js?v=4"></script>
+</body>
+</html>

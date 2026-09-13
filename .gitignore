@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# 本地数据库（运行时生成，绝不入库）
+data/
+*.db
+*.sqlite3
+
+# 密钥与本地配置
+.env
+.env.local
+
+# 编辑器 / 系统
+.idea/
+.DS_Store
+Thumbs.db

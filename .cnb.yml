@@ -1,0 +1,53 @@
+# ==========================================================================
+# 小账本 · CNB 云原生配置
+#
+# 两段配置：
+#   main.push —— 推到 main 分支时自动构建并推送镜像到 CNB 制品库；
+#   $         —— 「仅预览模式」：访客点右上角按钮，不进 IDE，直接看预览页。
+#
+# ⚠️ 三条铁律（踩过坑的都懂）：
+#   1. launch 里的镜像地址必须是**常量**。用 ${CNB_DOCKER_REGISTRY} 之类的变量
+#      会导致别人 Fork 后解析到自己仓库的路径，而对方仓库没构建过镜像 → 启动必失败。
+#      👉 请把下面的 docker_class/ai-engineering-course 换成你自己的 org/repo。
+#   2. 服务必须监听 0.0.0.0（本项目已在 run.py 中固定），监听 127.0.0.1 预览打不开。
+#   3. 端口四处对齐：Dockerfile EXPOSE / PORT 环境变量 / launch 命令 / 应用监听。
+#
+# ⚠️ onlyPreview 会让主分支再也点不进 IDE。继续开发请新建 dev 分支，
+#    在 dev 分支用 docs/cnb-开发分支配置.yml 覆盖本文件（README 有详细步骤）。
+# ==========================================================================
+
+main:
+  push:
+    - stages:
+        - name: build-and-push
+          script: |
+            set -euo pipefail
+            IMAGE="${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:latest"
+            echo "构建镜像：${IMAGE}"
+            docker build -t "${IMAGE}" .
+            docker push "${IMAGE}"
+            echo "镜像已就绪，可以点右上角「🐷 开始记账」了"
+      services:
+        - docker
+
+$:
+  vscode:
+    - runner:
+        cpus: 8
+      env:
+        VIRTUAL_ENV_DISABLE_PROMPT: "1"
+      services:
+        - docker
+        - name: vscode
+          options:
+            # 跳过 IDE，点按钮直接出业务端口预览页
+            onlyPreview: true
+            # 用 >- 折行成单行命令；-e 透传平台注入的三个大模型环境变量，
+            # 容器里就能零密钥调用 CNB LLM
+            launch: >-
+              docker run -d --network host
+              -e PORT=8686
+              -e CNB_API_ENDPOINT -e CNB_REPO_SLUG -e CNB_TOKEN
+              docker.cnb.cool/docker_class/ai-engineering-course:latest
+            keepAliveTimeout: 3600000
+            daemon: true
