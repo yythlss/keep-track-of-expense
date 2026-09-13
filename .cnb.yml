@@ -38,16 +38,16 @@ $:
         VIRTUAL_ENV_DISABLE_PROMPT: "1"
       services:
         - docker
-        - name: vscode
-          options:
-            # 跳过 IDE，点按钮直接出业务端口预览页
-            onlyPreview: true
-            # 用 >- 折行成单行命令；-e 透传平台注入的三个大模型环境变量，
-            # 容器里就能零密钥调用 CNB LLM
-            launch: >-
-              docker run -d --network host
-              -e PORT=8686
-              -e CNB_API_ENDPOINT -e CNB_REPO_SLUG -e CNB_TOKEN
-              docker.cnb.cool/docker_class/ai-engineering-course:latest
-            keepAliveTimeout: 3600000
-            daemon: true
+        # - name: vscode
+        #   options:
+        #     # 跳过 IDE，点按钮直接出业务端口预览页
+        #     onlyPreview: true
+        #     # 用 >- 折行成单行命令；-e 透传平台注入的三个大模型环境变量，
+        #     # 容器里就能零密钥调用 CNB LLM
+        #     launch: >-
+        #       docker run -d --network host
+        #       -e PORT=8686
+        #       -e CNB_API_ENDPOINT -e CNB_REPO_SLUG -e CNB_TOKEN
+        #       docker.cnb.cool/docker_class/ai-engineering-course:latest
+        #     keepAliveTimeout: 3600000
+        #     daemon: true
