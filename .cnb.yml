@@ -1,9 +1,13 @@
 # ==========================================================================
 # 小账本 · CNB 云原生配置
 #
-# 两段配置：
+# 三段配置：
+#   include   —— 从中心 CI 仓库引入作品自动化检查流水线（模板要求保留，勿改写）；
 #   main.push —— 推到 main 分支时自动构建并推送镜像到 CNB 制品库；
 #   $         —— 「仅预览模式」：访客点右上角按钮，不进 IDE，直接看预览页。
+#
+# ⚠️ 顺序不能反：launch 拉的是 main.push 推上去的镜像，镜像不存在时预览页会一直
+#    转圈打不开。所以第一次点按钮之前，必须先往 main 推一次，让镜像先构建出来。
 #
 # ⚠️ 三条铁律（踩过坑的都懂）：
 #   1. launch 里的镜像地址必须是**常量**。用 ${CNB_DOCKER_REGISTRY} 之类的变量
@@ -16,6 +20,12 @@
 # ⚠️ onlyPreview 会让主分支再也点不进 IDE。继续开发请新建 dev 分支，
 #    在 dev 分支用 docs/cnb-开发分支配置.yml 覆盖本文件（README 有详细步骤）。
 # ==========================================================================
+
+# ---- 作品自动化检查流水线，从中心 CI 仓库引入 ----
+# 模板明确要求保留这一段：检查逻辑（提交规范 / 可构建 / 可运行 / AI 评审）集中在
+# 中心仓库维护、统一升级，作品侧不要改写，也不要删掉。
+include:
+  - https://cnb.cool/whut1/ai-engineering-exercise-ci/-/blob/main/hackathon.yml
 
 main:
   push:
@@ -46,8 +56,8 @@ $:
           options:
             # 跳过 IDE，点按钮直接出业务端口预览页
             onlyPreview: true
-            # ⚠️ launch / daemon / keepAliveTimeout 必须写在 options 内，
-            #    与 options 平级 CNB 不会识别（官方 schema 明确如此）。
+            # ⚠️ launch / daemon / keepAliveTimeout 都写在 options 内，与 options
+            #    平级 CNB 不会识别（参照已跑通的 git-demo 仓库，写法与之一致）。
             # 用 >- 折行成单行命令；-e 透传平台注入的三个大模型环境变量，
             # 容器里就能零密钥调用 CNB LLM
             launch: >-
