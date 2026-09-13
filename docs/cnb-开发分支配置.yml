@@ -1,0 +1,29 @@
+# ==========================================================================
+# 小账本 · dev 分支专用 CNB 配置（不带 onlyPreview）
+#
+# 为什么需要它：主分支配了 onlyPreview: true 之后，就再也点不进云原生开发环境了。
+# 解决办法是在 dev 分支保留一份**完整 IDE** 的配置。
+#
+# 用法：
+#   1. 新建 dev 分支并切换过去；
+#   2. 把本文件内容复制到 dev 分支的 .cnb.yml（覆盖主分支那份）；
+#   3. 在 dev 分支页面点「云原生开发」，即可进入 IDE 继续开发；
+#   4. 主分支保留 onlyPreview 配置对外展示，两者互不影响。
+# ==========================================================================
+
+$:
+  vscode:
+    - runner:
+        cpus: 8
+      docker:
+        image: docker.cnb.cool/looc/default-dev-env:latest
+      env:
+        VIRTUAL_ENV_DISABLE_PROMPT: "1"
+      services:
+        - vscode
+        - docker
+      stages:
+        - name: install-deps
+          script: |
+            cd /workspace
+            pip install -r requirements.txt

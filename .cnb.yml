@@ -1,40 +1,53 @@
-# ============================================================
-# Hackathon 作品模板流水线
+# ==========================================================================
+# 小账本 · CNB 云原生配置
 #
-#   include         从中心 CI 仓库引入作品自动化检查流水线 ($.pull_request)
-#                   检查逻辑集中在中心仓库维护 统一升级 学员无需也不应改写检查本身
-#   $.vscode        云原生开发环境  Fork 后点右上角 云原生开发 秒级拉起
-#   main.push       推送到 main 时自动构建并推送镜像到 CNB 制品库 供仅预览模式使用
+# 两段配置：
+#   main.push —— 推到 main 分支时自动构建并推送镜像到 CNB 制品库；
+#   $         —— 「仅预览模式」：访客点右上角按钮，不进 IDE，直接看预览页。
 #
-# 注 你可以自由编辑本文件 (开预览 / 改端口 / 定制构建) 只要保留上面的 include 即可
-#    若要开启 Fork 即玩 的仅预览按钮 见 README 进阶 需把 $.vscode 段替换为
-#    onlyPreview 配置 建议新建 dev 分支保留开发用配置 主分支专用于对外展示
-# ============================================================
-
-# ---- 作品自动化检查流水线 从 CI 仓库引入 ----
-include:
-  - https://cnb.cool/whut1/ai-engineering-exercise-ci/-/blob/main/hackathon.yml
-
-$:
-  # ---------------- 云原生开发环境 ----------------
-  vscode:
-    - runner:
-        cpus: 16
-      docker:
-        image: docker.cnb.cool/hackathon/vibegame-dev-env:latest
-      services:
-        - vscode
-        - docker
+# ⚠️ 三条铁律（踩过坑的都懂）：
+#   1. launch 里的镜像地址必须是**常量**。用 ${CNB_DOCKER_REGISTRY} 之类的变量
+#      会导致别人 Fork 后解析到自己仓库的路径，而对方仓库没构建过镜像 → 启动必失败。
+#      👉 请把下面的 docker_class/ai-engineering-course 换成你自己的 org/repo。
+#   2. 服务必须监听 0.0.0.0（本项目已在 run.py 中固定），监听 127.0.0.1 预览打不开。
+#   3. 端口四处对齐：Dockerfile EXPOSE / PORT 环境变量 / launch 命令 / 应用监听。
+#
+# ⚠️ onlyPreview 会让主分支再也点不进 IDE。继续开发请新建 dev 分支，
+#    在 dev 分支用 docs/cnb-开发分支配置.yml 覆盖本文件（README 有详细步骤）。
+# ==========================================================================
 
 main:
-  # ---------------- 推送主分支 自动构建并推送镜像 ----------------
   push:
-    - name: 构建并推送镜像
-      services:
-        - docker
-      stages:
+    - stages:
         - name: build-and-push
           script: |
-            docker build -t ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:latest .
-            docker push ${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:latest
-            echo "✅ 镜像已推送 可配合仅预览模式一键启动"
+            set -euo pipefail
+            IMAGE="${CNB_DOCKER_REGISTRY}/${CNB_REPO_SLUG_LOWERCASE}:latest"
+            echo "构建镜像：${IMAGE}"
+            docker build -t "${IMAGE}" .
+            docker push "${IMAGE}"
+            echo "镜像已就绪，可以点右上角「🐷 开始记账」了"
+      services:
+        - docker
+
+$:
+  vscode:
+    - runner:
+        cpus: 8
+      env:
+        VIRTUAL_ENV_DISABLE_PROMPT: "1"
+      services:
+        - docker
+        - name: vscode
+          options:
+            # 跳过 IDE，点按钮直接出业务端口预览页
+            onlyPreview: true
+            # 用 >- 折行成单行命令；-e 透传平台注入的三个大模型环境变量，
+            # 容器里就能零密钥调用 CNB LLM
+            launch: >-
+              docker run -d --network host
+              -e PORT=8686
+              -e CNB_API_ENDPOINT -e CNB_REPO_SLUG -e CNB_TOKEN
+              docker.cnb.cool/docker_class/ai-engineering-course:latest
+            keepAliveTimeout: 3600000
+            daemon: true
