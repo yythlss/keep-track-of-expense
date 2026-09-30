@@ -1,3 +1,4 @@
+# [点击此处立即开始记账](https://cnb.cool/yythlss/keep-track-of-expenses)
 # 🐷 小账本 · 一句话记账
 
 > **说一句话就能记账，AI 帮你看懂钱包。**
